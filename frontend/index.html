@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WB Tech - Order Lookup</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-shopping-cart"></i>
+                    <h1>WB Tech</h1>
+                </div>
+                <div class="header-subtitle">
+                    <p>Order Lookup System</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- Order Lookup Section -->
+        <section class="lookup-section">
+            <div class="lookup-card">
+                <h2>Find Order by ID</h2>
+                <p>Enter an order ID to view order details</p>
+                
+                <div class="search-form">
+                    <div class="input-group">
+                        <input type="text" id="orderIdInput" placeholder="Enter order ID (e.g., b1, b2, b3...)" />
+                        <button class="btn btn-primary" onclick="lookupOrder()">
+                            <i class="fas fa-search"></i>
+                            Lookup Order
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Order Display Section -->
+        <section class="order-section" id="orderSection" style="display: none;">
+            <div class="order-card">
+                <div class="order-header">
+                    <h3>Order Details</h3>
+                    <button class="close-btn" onclick="hideOrder()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="order-content" id="orderContent">
+                    <!-- Order details will be populated here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Loading Overlay -->
+        <div id="loadingOverlay" class="loading-overlay hidden">
+            <div class="loading-spinner">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Loading order...</p>
+            </div>
+        </div>
+
+        <!-- Error Message -->
+        <div id="errorMessage" class="error-message hidden">
+            <div class="error-content">
+                <i class="fas fa-exclamation-circle"></i>
+                <span id="errorText">Error message</span>
+            </div>
+        </div>
+    </div>
+    <script>
+        window.API_BASE = "http://localhost:8080";
+    </script>
+    <script src="script.js"></script>
+</body>
+</html>

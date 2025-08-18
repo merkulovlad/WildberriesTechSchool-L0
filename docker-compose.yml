@@ -1,0 +1,142 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: wbtech-backend
+    ports:
+      - "8080:8080"
+    environment:
+      - BACKEND_HOST=0.0.0.0
+      - BACKEND_PORT=8080
+      - LOG_FILE=/app/app.log
+      - LOG_LEVEL=info
+      - LOG_TO_CONSOLE=true
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=wbtech
+      - POSTGRES_SSLMODE=disable
+      - POSTGRES_MAX_CONNECTIONS=10
+      - POSTGRES_CONNECTION_TIMEOUT=30
+      - KAFKA_BROKERS=kafka:29092
+      - KAFKA_TOPIC=orders
+      - KAFKA_GROUP=wbtech-group
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    volumes:
+      - ./logs:/app/logs
+    restart: unless-stopped
+    networks:
+      - wbtech-network
+    healthcheck:
+      # Adjust path if your health route differs
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/healthz || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+
+  kafka-producer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: wbtech-kafka-producer
+    environment:
+      - KAFKA_BROKERS=kafka:29092
+      - KAFKA_TOPIC=orders
+      - MESSAGE_COUNT=20
+      - MESSAGE_DELAY=1.0
+    depends_on:
+      kafka:
+        condition: service_healthy
+      backend:
+        condition: service_healthy     # ← wait for backend ready
+    command: ["sh", "/app/scripts/run_producer.sh"]
+    restart: "no"
+    networks:
+      - wbtech-network
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: wbtech-postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=wbtech
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - wbtech-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d wbtech -h localhost"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: wbtech-kafka
+    ports:
+      - "9092:9092"
+      - "9101:9101"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_JMX_PORT: 9101
+      KAFKA_JMX_HOSTNAME: localhost
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+      KAFKA_DELETE_TOPIC_ENABLE: 'true'
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - wbtech-network
+    healthcheck:
+      # List topics as a simple readiness probe
+      test: ["CMD-SHELL", "kafka-topics --bootstrap-server localhost:9092 --list >/dev/null 2>&1"]
+      interval: 5s
+      timeout: 5s
+      retries: 25
+      start_period: 20s
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    container_name: wbtech-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    restart: unless-stopped
+    networks:
+      - wbtech-network
+    healthcheck:
+      # ZooKeeper shell exits non-zero on failure
+      test: ["CMD-SHELL", "zookeeper-shell localhost:2181 ls / >/dev/null 2>&1"]
+      interval: 5s
+      timeout: 5s
+      retries: 25
+      start_period: 10s
+
+volumes:
+  postgres_data:
+
+networks:
+  wbtech-network:
+    driver: bridge
