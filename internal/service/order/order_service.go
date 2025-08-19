@@ -5,34 +5,45 @@ import (
 	"github.com/merkulovlad/wbtech-go/internal/db/repository"
 	"github.com/merkulovlad/wbtech-go/internal/model"
 	"github.com/merkulovlad/wbtech-go/internal/service/cache"
+	"golang.org/x/sync/singleflight"
 )
 
 type orderService struct {
 	repo  repository.Repository
 	cache cache.InterfaceCache
+	group singleflight.Group
 }
 
 func NewOrderService(r repository.Repository, c cache.InterfaceCache) Service {
 	return &orderService{
 		repo:  r,
 		cache: c,
+		group: singleflight.Group{},
 	}
 }
 
 func (s *orderService) Get(c context.Context, id string) (*model.Order, error) {
-	order, exists := s.cache.Get(id)
-	if exists {
+	if order, exists := s.cache.Get(id); exists {
 		return order, nil
 	}
-	order, err := s.repo.GetOrder(c, id)
+	res, err, _ := s.group.Do(id, func() (interface{}, error) {
+		if order, exists := s.cache.Get(id); exists {
+			return order, nil
+		}
+
+		order, err := s.repo.GetOrder(c, id)
+		if err != nil {
+			return nil, err
+		}
+
+		_ = s.cache.Set(id, order)
+		return order, nil
+	})
+
 	if err != nil {
 		return nil, err
 	}
-	err = s.cache.Set(id, order)
-	if err != nil {
-		return order, err
-	}
-	return order, nil
+	return res.(*model.Order), nil
 }
 
 func (s *orderService) Create(c context.Context, order *model.Order) error {
