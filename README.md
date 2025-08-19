@@ -31,7 +31,7 @@ The service implements the following flow:
 - **PostgreSQL** — database
 - **Docker & Docker Compose** — containerization
 - **Fiber** — web framework
-- **Python** — for frontend server
+- **Python** — for frontend server and kafka-producer script
 
 ---
 
@@ -44,6 +44,7 @@ cd WildberriesTechSchool-L0
 ```
 ### 2. Run services with Docker
 ```bash
+cp .env.example .env
 docker-compose up --build
 ```
 ### 3. Run frontend(with Python)
