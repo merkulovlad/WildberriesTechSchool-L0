@@ -16,8 +16,17 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/gofiber/swagger"
+	_ "github.com/merkulovlad/wbtech-go/docs"
 )
 
+// @title           Order Service API
+// @version         1.0
+// @description     API for managing and retrieving orders.
+// @host            localhost:8080
+// @BasePath        /
+// @schemes         http
 func main() {
 	config := cfg.MustLoad()
 	log, err := logger.NewLogger(&config.Log)
@@ -65,6 +74,7 @@ func main() {
 	}
 	log.Info("starting server")
 	app := server.NewServer(orderService, log)
+	app.Get("/swagger/*", swagger.HandlerDefault)
 	go func() {
 		if err := app.Listen(":8080"); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Fatal(err)

@@ -19,6 +19,16 @@ func NewHandler(order ordr.Service, logger logger.InterfaceLogger) *Handler {
 	}
 }
 
+// getOrderHandler
+// @Summary      Get order by ID
+// @Description  Retrieves order details by order_uid
+// @Tags         order
+// @Produce      json
+// @Param        order_uid  path      string  true  "Order UID"
+// @Success      200  {object}  model.Order
+// @Failure      400  {object}  model.ErrorResponse
+// @Failure      404  {object}  model.ErrorResponse
+// @Router       /order/{order_uid} [get]
 func (h *Handler) getOrderHandler(c *fiber.Ctx) error {
 	id := c.Params("order_uid")
 	h.Logger.Infof("Getting order %s", id)
