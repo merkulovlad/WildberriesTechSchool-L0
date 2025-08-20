@@ -32,6 +32,7 @@ The service implements the following flow:
 - **Docker & Docker Compose** — containerization
 - **Fiber** — web framework
 - **Python** — for frontend server and kafka-producer script
+- **Swagger** — API documentation
 
 ---
 
@@ -52,3 +53,4 @@ docker-compose up --build
 cd frontend
 python3 -m http.server 3001
 ```
+

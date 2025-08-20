@@ -226,6 +226,4 @@ To add new data types or modify the generation logic:
 3. Test with your consumer
 4. Update this documentation
 
-## License
 
-These scripts are part of your project and follow the same license terms.
