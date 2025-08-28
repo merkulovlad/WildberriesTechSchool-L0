@@ -4,6 +4,13 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
 	cfg "github.com/merkulovlad/wbtech-go/internal/config/config"
 	"github.com/merkulovlad/wbtech-go/internal/db/repository"
 	"github.com/merkulovlad/wbtech-go/internal/kafka"
@@ -11,11 +18,6 @@ import (
 	"github.com/merkulovlad/wbtech-go/internal/server"
 	"github.com/merkulovlad/wbtech-go/internal/service/cache"
 	"github.com/merkulovlad/wbtech-go/internal/service/order"
-	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
 
 	"github.com/gofiber/swagger"
 	_ "github.com/merkulovlad/wbtech-go/docs"
@@ -34,9 +36,8 @@ func main() {
 		log.Fatalf("failed to initialize logger: %v", err)
 	}
 	defer func(log *logger.Logger) {
-		err := log.Sync()
-		if err != nil {
-
+		if err := log.Sync(); err != nil {
+			fmt.Printf("failed to sync logger: %v", err)
 		}
 	}(log)
 
@@ -48,7 +49,7 @@ func main() {
 	defer func(db *sql.DB) {
 		err := db.Close()
 		if err != nil {
-
+			fmt.Printf("failed to close database connection: %v", err)
 		}
 	}(db)
 	log.Info("Migrating database ")
@@ -68,10 +69,10 @@ func main() {
 	ctxUpdate, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 
-	err = orderService.UpdateCache(ctxUpdate)
-	if err != nil {
-		return
+	if err = orderService.UpdateCache(ctxUpdate); err != nil {
+		log.Errorf("failed to update cache: %v", err)
 	}
+
 	log.Info("starting server")
 	app := server.NewServer(orderService, log)
 	app.Get("/swagger/*", swagger.HandlerDefault)
@@ -84,10 +85,8 @@ func main() {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
-
 	log.Info("Shutting down...")
 	if err := app.Shutdown(); err != nil {
 		log.Fatal(err)
 	}
-
 }

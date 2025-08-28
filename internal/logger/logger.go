@@ -1,8 +1,9 @@
 package logger
 
 import (
-	"github.com/merkulovlad/wbtech-go/internal/config/config"
 	"os"
+
+	"github.com/merkulovlad/wbtech-go/internal/config/config"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"

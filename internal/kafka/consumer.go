@@ -3,6 +3,7 @@ package kafka
 import (
 	"context"
 	"encoding/json"
+
 	"github.com/merkulovlad/wbtech-go/internal/logger"
 	"github.com/merkulovlad/wbtech-go/internal/model"
 	"github.com/merkulovlad/wbtech-go/internal/service/order"

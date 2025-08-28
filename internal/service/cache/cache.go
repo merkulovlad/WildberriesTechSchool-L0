@@ -2,9 +2,10 @@ package cache
 
 import (
 	"container/list"
+	"sync"
+
 	"github.com/merkulovlad/wbtech-go/internal/logger"
 	"github.com/merkulovlad/wbtech-go/internal/model"
-	"sync"
 )
 
 type Cache struct {
