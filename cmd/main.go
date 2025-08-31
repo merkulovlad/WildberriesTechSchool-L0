@@ -62,10 +62,12 @@ func main() {
 	c := cache.NewCache(log)
 
 	orderService := order.NewOrderService(orderRepo, c)
-	consumer := kafka.NewConsumer(config.Kafka.Brokers, config.Kafka.Topic, config.Kafka.Group, orderService, log)
+	consumer := kafka.NewConsumer(config.Kafka.Brokers, config.Kafka.Topic, config.Kafka.Group, "kafka.DLQ", orderService, log)
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
-	go consumer.Run(ctx)
+	if err := consumer.Run(ctx); err != nil && !errors.Is(err, context.Canceled) {
+		log.Errorf("consumer stopped: %v", err)
+	}
 	ctxUpdate, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 

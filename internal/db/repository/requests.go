@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/merkulovlad/wbtech-go/internal/model"
@@ -73,7 +74,7 @@ func (o *OrderRepository) GetOrder(ctx context.Context, id string) (*model.Order
 	defer func(rows *sql.Rows) {
 		err := rows.Close()
 		if err != nil {
-
+			log.Printf("failed to close rows: %v", err)
 		}
 	}(rows)
 
@@ -173,7 +174,12 @@ VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
 		if err != nil {
 			return fmt.Errorf("prepare items: %w", err)
 		}
-		defer stmt.Close()
+		defer func(stmt *sql.Stmt) {
+			err := stmt.Close()
+			if err != nil {
+				log.Printf("failed to close statement: %v", err)
+			}
+		}(stmt)
 
 		for _, it := range ord.Items {
 			if _, err := stmt.ExecContext(ctx,
@@ -204,7 +210,12 @@ func (o *OrderRepository) GetRecent(ctx context.Context, limit int) ([]*model.Or
 	if err != nil {
 		return nil, fmt.Errorf("select recent orders: %w", err)
 	}
-	defer rows.Close()
+	defer func(rows *sql.Rows) {
+		err := rows.Close()
+		if err != nil {
+			log.Printf("failed to close rows: %v", err)
+		}
+	}(rows)
 
 	var orders []*model.Order
 	for rows.Next() {
