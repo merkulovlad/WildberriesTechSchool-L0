@@ -14,7 +14,7 @@ type Logger struct {
 	logger *zap.Logger
 }
 
-var _ LoggerInterface = (*Logger)(nil)
+var _ InterfaceLogger = (*Logger)(nil)
 
 func NewLogger(cfg *config.LogConfig) (*Logger, error) {
 	if err := os.MkdirAll("logs", 0755); err != nil {
